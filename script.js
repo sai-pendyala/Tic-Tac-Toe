@@ -1,3 +1,15 @@
+function Cell() {
+    let value = "";
+
+    const addToken = (player) => {
+        value = player.token;
+    };
+
+    const getValue = () => value;
+
+    return { addToken, getValue };
+}
+
 function Gameboard() {
     const ROWS = 3;
     const COLS = 3;
@@ -16,13 +28,14 @@ function Gameboard() {
         const boardWithValues = board.map((row) =>
             row.map((cell) => cell.getValue())
         );
-        console.log(boardWithValues);
+        // console.log(boardWithValues);
     };
 
     const selectCell = (row, column, player) => {
         let cellValue = board[row][column].getValue();
-        if (cellValue !== "") return;
+        if (cellValue !== "") return false;
         board[row][column].addToken(player);
+        return true;
     };
 
     const hasWon = () => {
@@ -81,20 +94,9 @@ function Gameboard() {
     return { getBoard, printBoard, selectCell, hasWon, isFull };
 }
 
-function Cell() {
-    let value = "";
-
-    const addToken = (player) => {
-        value = player.token;
-    };
-
-    const getValue = () => value;
-
-    return { addToken, getValue };
-}
-
 function Gamecontroller(playerOne = "Player One", playerTwo = "Player Two") {
     const board = Gameboard();
+    const playerTurn = document.querySelector('.turn');
 
     const players = [
         { name: playerOne, token: "X" },
@@ -109,46 +111,47 @@ function Gamecontroller(playerOne = "Player One", playerTwo = "Player Two") {
 
     const getActivePlayer = () => activePlayer;
 
-    const printNewRound = () => {
-        board.printBoard();
-        console.log(`${getActivePlayer().name}'s turn`);
-    };
+    // const printNewRound = () => {
+    //     board.printBoard();
+    //     console.log(`${getActivePlayer().name}'s turn`);
+    // };
 
     const playRound = (row, column) => {
-        console.log(`Selecting cell (${row}, ${column})`);
-        board.selectCell(row, column, getActivePlayer());
+        // console.log(`Selecting cell (${row}, ${column})`);
+        if(!board.selectCell(row, column, getActivePlayer())) return;
 
         if (board.hasWon() == true) {
-            console.log(`${getActivePlayer().name} has won`);
-            process.exit(0);
+            playerTurn.textContent = `${getActivePlayer().name} has Won!!!`;   
+            // console.log(`${getActivePlayer().name} has won`);
         }
 
         if (board.isFull() == true) {
-            console.log("Tie");
-            process.exit(0);
+            playerTurn.textContent = "It's a Tie!!!";
+            // console.log("Tie");
         }
 
+        
         switchPlayer();
-        printNewRound();
+        // printNewRound();
+        if(!board.hasWon() && !board.isFull())
+            playerTurn.textContent = `${getActivePlayer().name}'s turn...`;
     };
+    
+    // printNewRound();
+    playerTurn.textContent = `${getActivePlayer().name}'s turn...`;
 
-    printNewRound();
-
-    return { playRound, getActivePlayer, getBoard: board.getBoard };
+    return { playRound, getBoard: board.getBoard, hasWon: board.hasWon, isFull: board.isFull };
 }
 
 function Screencontroller() {
     const game = Gamecontroller();
-    const playerTurn = document.querySelector(".turn");
+    const container = document.querySelector('.container');
     const boardDiv = document.querySelector(".board");
 
     const updateScreen = () => {
         boardDiv.textContent = "";
 
         const board = game.getBoard();
-        const activePlayer = game.getActivePlayer().name;
-
-        playerTurn.textContent = `${activePlayer}'s turn...`;
 
         board.forEach((row, rInd) => {
             row.forEach((cell, cInd) => {
@@ -170,6 +173,13 @@ function Screencontroller() {
 
         game.playRound(selectedRow, selectedColumn);
         updateScreen();
+
+        if (game.hasWon() || game.isFull()) {
+            boardDiv.removeEventListener("click", clickHandler);
+            const refreshText = document.createElement('p');
+            refreshText.textContent = 'Please refresh the page';
+            container.appendChild(refreshText);
+        }
     }
 
     boardDiv.addEventListener("click", clickHandler);
