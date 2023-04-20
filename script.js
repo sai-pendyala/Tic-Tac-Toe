@@ -118,10 +118,12 @@ function Gamecontroller(playerOne = "Player One", playerTwo = "Player Two") {
         
         if(board.hasWon() == true) {
             console.log(`${getActivePlayer().name} has won`);
+            process.exit(0);
         }
 
         if(board.isFull() == true) {
             console.log("Tie");
+            process.exit(0);
         }
 
         switchPlayer();
